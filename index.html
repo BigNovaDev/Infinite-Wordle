@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Wordle Clone</title>
+  <style>
+    body {
+      background-color: #121213;
+      color: #d7dadc;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+      color: #ffffff;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .tile {
+      width: 65px;
+      height: 65px;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      background-color: #3a3a3c;
+      color: #ffffff;
+      border: 2px solid #3a3a3c;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+      box-shadow: 0 2px 2px rgba(0,0,0,0.3);
+    }
+
+    .correct {
+      background-color: #6aaa64;
+      border-color: #6aaa64;
+    }
+
+    .present {
+      background-color: #c9b458;
+      border-color: #c9b458;
+    }
+
+    .absent {
+      background-color: #3a3a3c;
+      border-color: #3a3a3c;
+      opacity: 0.8;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #f3f3f3;
+      text-align: center;
+    }
+
+    .new-game {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #818384;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    input:focus {
+      outline: 2px solid #818384;
+    }
+  </style>
+</head>
+<body>
+  <h1>Infinite Wordle</h1>
+  <h3>BigNova_Dev Productions</h3>
+  <div id="board"></div>
+  <div id="message"></div>
+  <button class="new-game" onclick="setupBoard()">🔄 New Game</button>
+
+  <script>
+    const words = [
+      "apple", "grape", "lemon", "peach", "mango", "bread", "chili", "toast", "crane", "track",
+      "plant", "sugar", "spice", "flame", "sweep", "float", "lucky", "smile", "bloom", "dream",
+      "light", "shine", "style", "frost", "grind", "swirl", "cloud", "flock", "angle", "bride",
+      "charm", "clean", "drift", "gleam", "guess", "happy", "jelly", "knife", "laugh", "medal",
+      "neigh", "noble", "ocean", "proud", "quest", "rainy", "risky", "scale", "swift", "tempo",
+      "trend", "trust", "vivid", "whirl", "witty", "zesty", "adore", "blink", "candy", "dizzy",
+      "elbow", "fancy", "giant", "hover", "issue", "jazzy", "kneel", "latch", "mirth", "nudge",
+      "orbit", "perky", "quiet", "rowdy", "scoop", "thump", "udder", "vapor", "waltz", "xenon",
+      "yearn", "zonal", "amber", "blush", "caper", "drape", "eagle", "fable", "glint", "hound",
+      "imply", "jumpy", "koala", "lunar", "magic", "nifty", "oxide", "prime", "quilt", "ruddy",
+      "spurt", "teach", "uncle", "valet", "wheat", "yeast", "zebra", "abuse", "banjo", "crisp",
+      "dealt", "excel", "frown", "gauge", "haste", "inlet", "jolly", "karma", "loyal", "march",
+      "nurse", "octet", "piano", "quart", "roast", "siren", "tulip", "urban", "voter", "wrist",
+      "yacht", "zesty", "adapt", "brisk", "creep", "delay", "evoke", "flood", "gloat", "haste",
+      "ideal", "joker", "knead", "laden", "might", "niche", "opine", "pivot", "quack", "ranch",
+      "sheep", "trust", "untie", "vixen", "wider", "youth", "zebra", "agree", "badge", "camel",
+      "diver", "eager", "finch", "gazer", "haste", "input", "jaded", "laden", "modem", "noisy",
+      "oxide", "plaza", "query", "radii", "sassy", "taunt", "undue", "venom", "weird", "xylem",
+      "young", "zippy", "aisle", "beach", "cease", "dwell", "envoy", "fiery", "graft", "humor",
+      "index", "jaunt", "kayak", "leapt", "motel", "nifty", "occur", "punch", "quite", "reign",
+      "shard", "tiger", "usage", "vague", "woken", "xerox", "yield", "zonal", "aloft", "blend",
+      "chant", "devil", "enjoy", "fancy", "gleam", "harsh", "input", "jewel", "knack", "lemon",
+      "motor", "nudge", "ounce", "pride", "quirk", "ridge", "shiny", "teach", "unite", "vocal",
+      "woven", "xenon", "yearn", "zoned", "acute", "blunt", "coral", "debut", "elite", "faded",
+      "girth", "haunt", "icily", "jaunt", "kneel", "limit", "mirth", "noble", "optic", "plume"
+    ];
+    let secret = "";
+    let currentRow = 0;
+    const maxRows = 6;
+
+    function setupBoard() {
+      secret = words[Math.floor(Math.random() * words.length)].toUpperCase();
+      const board = document.getElementById("board");
+      board.innerHTML = '';
+      document.getElementById("message").textContent = '';
+      currentRow = 0;
+
+      for (let r = 0; r < maxRows; r++) {
+        const row = document.createElement("div");
+        row.className = "row";
+        for (let c = 0; c < 5; c++) {
+          const input = document.createElement("input");
+          input.setAttribute("maxlength", "1");
+          input.className = "tile";
+          input.dataset.row = r;
+          input.dataset.col = c;
+          row.appendChild(input);
+        }
+        board.appendChild(row);
+      }
+
+      focusRow(0);
+    }
+
+    function focusRow(rowIndex) {
+      const rowTiles = document.querySelectorAll(`.tile[data-row="${rowIndex}"]`);
+      rowTiles[0].focus();
+
+      rowTiles.forEach((input, idx) => {
+        input.addEventListener("input", () => {
+          if (input.value && idx < 4) {
+            rowTiles[idx + 1].focus();
+          }
+        });
+      });
+
+      rowTiles[4].addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          submitRow(rowIndex, rowTiles);
+        }
+      });
+    }
+
+    function submitRow(rowIndex, tiles) {
+      const guess = Array.from(tiles).map(t => t.value.toUpperCase()).join("");
+      if (guess.length !== 5) {
+        document.getElementById("message").textContent = "⚠️ Enter 5 letters!";
+        return;
+      }
+
+      for (let i = 0; i < 5; i++) {
+        const tile = tiles[i];
+        const letter = guess[i];
+
+        if (letter === secret[i]) {
+          tile.classList.add("correct");
+        } else if (secret.includes(letter)) {
+          tile.classList.add("present");
+        } else {
+          tile.classList.add("absent");
+        }
+        tile.disabled = true;
+      }
+
+      if (guess === secret) {
+        document.getElementById("message").textContent = `🎉 You got it! The word was "${secret}"`;
+      } else if (rowIndex < maxRows - 1) {
+        currentRow++;
+        focusRow(currentRow);
+      } else {
+        document.getElementById("message").textContent = `💀 Out of tries! The word was "${secret}"`;
+      }
+    }
+
+    setupBoard();
+  </script>
+</body>
+</html>
